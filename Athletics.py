@@ -243,7 +243,7 @@ class Boy:
         self.state_machine.draw()
         draw_rectangle(*self.get_bb())
     def get_bb(self):
-        return self.x - 15, self.y - 25, self.x + 15, self.y + 25
+        return self.x - 15, self.y - 25, self.x + 20, self.y + 25
 
     # fill here
 
