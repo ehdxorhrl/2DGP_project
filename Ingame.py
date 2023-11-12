@@ -6,6 +6,7 @@ import game_framework
 import Game_World
 # from boy import Boy
 from bg import Background
+from Athletics import Boy
 
 
 # boy = None
@@ -23,6 +24,7 @@ def handle_events():
 
 def init():
     # global grass
+    global boy
     global background1
 
     running = True
@@ -30,8 +32,8 @@ def init():
     background1 = Background()
     Game_World.add_object(background1, 0)
 
-    # boy = Boy()
-    # game_world.add_object(boy, 1)
+    boy = Boy()
+    Game_World.add_object(boy, 1)
 
     # fill here
 
