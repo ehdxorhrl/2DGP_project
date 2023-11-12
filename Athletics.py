@@ -66,11 +66,13 @@ class Idle:
 
     @staticmethod
     def do(boy):
-        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 3
+        pass
 
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(int(boy.frame) * 100, boy.action * 100, 100, 100, boy.x, boy.y)
+        # boy.image.clip_draw(int(boy.frame) * 100, 800, 100, 100, boy.x, boy.y)
+        boy.image.clip_draw(175 + int(boy.frame) * 45, 440, 45, 45, boy.x, boy.y, 50, 70)
         pass
 
 class Jump:
