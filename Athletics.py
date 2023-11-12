@@ -1,6 +1,6 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
 
-from pico2d import get_time, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT
+from pico2d import get_time, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_a, SDLK_d
 import Game_World
 import game_framework
 
@@ -8,11 +8,11 @@ import game_framework
 # ( state event type, event value )
 
 def right_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_a or e[1].key == SDLK_d)
 
 
 def right_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_a or e[1].key == SDLK_d)
 
 
 def left_down(e):
@@ -61,6 +61,7 @@ class Idle:
 
     @staticmethod
     def exit(boy, e):
+        boy.key = 0
         pass
 
     @staticmethod
@@ -78,29 +79,35 @@ class Run:
 
     @staticmethod
     def enter(boy, e):
-        if right_down(e) or left_up(e): # 오른쪽으로 RUN
-            boy.dir, boy.action, boy.face_dir = 1, 1, 1
-        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
-            boy.dir, boy.action, boy.face_dir = -1, 0, -1
+        if right_down(e):  # 오른쪽으로 RUN
+            if boy.key == 0:
+                boy.dir, boy.face_dir, boy.key = 10, 1, 1
+        elif left_down(e):  # 왼쪽으로 RUN
+            if boy.key == 0:
+                boy.x, boy.y = 50, 210
+        elif left_up(e) or right_up(e):
+            if boy.key == 1:
+                boy.key = 0
 
     @staticmethod
     def exit(boy, e):
         if space_down(e):
             boy.fire_ball()
-
         pass
 
     @staticmethod
     def do(boy):
-        # boy.frame = (boy.frame + 1) % 8
         boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
-        boy.x = clamp(25, boy.x, 1600-25)
-        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
+        boy.x = clamp(25, boy.x, 1600 - 25)
+        boy.runframe = (boy.runframe + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
 
+        # a 또는 d 키를 뗀 경우, 다시 눌렀을 때 움직임을 시작하도록 설정
+        if boy.key == 1 and boy.dir != 0:
+            boy.dir = boy.dir - 1
 
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(135 + int(boy.frame) * 46, 310, 46, 45, boy.x, boy.y, 50, 70)
+        boy.image.clip_draw(135 + int(boy.runframe) * 46, 310, 46, 45, boy.x, boy.y, 50, 70)
 
 
 class StateMachine:
@@ -135,6 +142,7 @@ class StateMachine:
 class Boy:
     def __init__(self):
         self.x, self.y = 50, 210
+        self.runframe = 0
         self.frame = 0
         self.action = 3
         self.face_dir = 1
@@ -143,6 +151,8 @@ class Boy:
         self.state_machine = StateMachine(self)
         self.state_machine.start()
         self.ball_count = 10
+        self.key = 0
+
 
     def update(self):
         self.state_machine.update()
@@ -154,3 +164,4 @@ class Boy:
         self.state_machine.draw()
 
     # fill here
+
