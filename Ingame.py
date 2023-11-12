@@ -4,7 +4,6 @@ from pico2d import *
 import game_framework
 
 import Game_World
-# from boy import Boy
 from bg import Background
 from Athletics import Boy
 
@@ -19,7 +18,7 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
         else:
-            # boy.handle_event(event)
+            boy.handle_event(event)
             pass
 
 def init():

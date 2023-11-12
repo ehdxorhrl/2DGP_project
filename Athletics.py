@@ -1,6 +1,6 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
 
-from pico2d import get_time, load_image, load_font, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_a, SDLK_d, SDLK_w
+from pico2d import get_time, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT
 import Game_World
 import game_framework
 
@@ -8,11 +8,19 @@ import game_framework
 # ( state event type, event value )
 
 def right_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_a or e[1].key == SDLK_d)
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
 
 
 def right_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_a or e[1].key == SDLK_d)
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
+
+
+def left_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
+
+
+def left_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
 def space_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
@@ -38,44 +46,7 @@ ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 8
 
 
-
-
-
-
-
-
-
-
-
 class Idle:
-
-    @staticmethod
-    def enter(boy, e):
-        if boy.face_dir == -1:
-            boy.action = 2
-        elif boy.face_dir == 1:
-            boy.action = 3
-        boy.dir = 0
-        boy.frame = 0
-        pass
-
-    @staticmethod
-    def exit(boy, e):
-
-        pass
-
-    @staticmethod
-    def do(boy):
-        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 3
-        pass
-
-    @staticmethod
-    def draw(boy):
-        # boy.image.clip_draw(int(boy.frame) * 100, 800, 100, 100, boy.x, boy.y)
-        boy.image.clip_draw(175 + int(boy.frame) * 45, 440, 45, 45, boy.x, boy.y, 50, 70)
-        pass
-
-class Jump:
 
     @staticmethod
     def enter(boy, e):
@@ -94,14 +65,14 @@ class Jump:
 
     @staticmethod
     def do(boy):
-        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        if get_time() - boy.wait_time > 2:
-            boy.state_machine.handle_event(('TIME_OUT', 0))
-
+         boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
+         if get_time() - boy.wait_time > 2:
+             boy.state_machine.handle_event(('TIME_OUT', 0))
     @staticmethod
     def draw(boy):
-        # boy.image.clip_draw(int(boy.frame) * 100, boy.action * 100, 100, 100, boy.x, boy.y)
-        pass
+        boy.image.clip_draw(130 + int(boy.frame) * 45, 440, 45, 45, boy.x, boy.y, 50, 70)
+
+
 
 class Run:
 
@@ -109,9 +80,14 @@ class Run:
     def enter(boy, e):
         if right_down(e) or left_up(e): # 오른쪽으로 RUN
             boy.dir, boy.action, boy.face_dir = 1, 1, 1
+        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
+            boy.dir, boy.action, boy.face_dir = -1, 0, -1
 
     @staticmethod
     def exit(boy, e):
+        if space_down(e):
+            boy.fire_ball()
+
         pass
 
     @staticmethod
@@ -119,21 +95,21 @@ class Run:
         # boy.frame = (boy.frame + 1) % 8
         boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
         boy.x = clamp(25, boy.x, 1600-25)
-        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
 
 
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(int(boy.frame) * 100, boy.action * 100, 100, 100, boy.x, boy.y)
+        boy.image.clip_draw(135 + int(boy.frame) * 46, 310, 46, 45, boy.x, boy.y, 50, 70)
+
 
 class StateMachine:
     def __init__(self, boy):
         self.boy = boy
         self.cur_state = Idle
         self.transitions = {
-            Idle: {right_down: Run, right_up: Run, time_out: Run, space_down: Run},
-            Run: {right_down: Idle, right_up: Idle, space_down: Idle}
-
+            Idle: {right_down: Run, left_down: Run, left_up: Run, right_up: Run, space_down: Idle},
+            Run: {right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle, space_down: Run},
         }
 
     def start(self):
@@ -156,18 +132,14 @@ class StateMachine:
         self.cur_state.draw(self.boy)
 
 
-
-
-
 class Boy:
     def __init__(self):
-        self.x, self.y = 400, 266
+        self.x, self.y = 50, 210
         self.frame = 0
         self.action = 3
         self.face_dir = 1
         self.dir = 0
         self.image = load_image('sonic_sprite.png')
-        # self.font = load_font('ENCR10B.TTF', 16)
         self.state_machine = StateMachine(self)
         self.state_machine.start()
         self.ball_count = 10
