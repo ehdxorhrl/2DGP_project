@@ -1,6 +1,7 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
 
-from pico2d import get_time, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_a, SDLK_d
+from pico2d import get_time, load_font, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_a, SDLK_d, \
+    draw_rectangle
 import Game_World
 import game_framework
 
@@ -27,6 +28,9 @@ def space_down(e):
 
 def time_out(e):
     return e[0] == 'TIME_OUT'
+
+def lay_down(e):
+    return e[0] == 'lay_down'
 
 # time_out = lambda e : e[0] == 'TIME_OUT'
 
@@ -67,13 +71,42 @@ class Idle:
     @staticmethod
     def do(boy):
          boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
-         if get_time() - boy.wait_time > 2:
-             boy.state_machine.handle_event(('TIME_OUT', 0))
+         pass
     @staticmethod
     def draw(boy):
         boy.image.clip_draw(130 + int(boy.frame) * 45, 440, 45, 45, boy.x, boy.y, 50, 70)
+class Stun:
+    @staticmethod
+    def enter(boy, e):
+        boy.frame = 0
+        boy.wait_time = get_time()
+        pass
+    @staticmethod
+    def exit(boy, e):
+        pass
 
+    @staticmethod
+    def do(boy):
+        if int(boy.frame) < 3:
+            boy.x += 1
+            boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
+        if get_time() - boy.wait_time > 2:
+            boy.state_machine.handle_event(('TIME_OUT', 0))
+        pass
 
+    @staticmethod
+    def draw(boy):
+        if int(boy.frame) == 0:
+            boy.image.clip_draw(635, 440, 45, 45, boy.x, boy.y, 50, 70)
+            pass
+        elif int(boy.frame) == 1:
+            boy.image.clip_draw(585, 440, 45, 45, boy.x, boy.y, 50, 70)
+            pass
+        elif int(boy.frame) == 2:
+            boy.image.clip_draw(510, 240, 35, 45, boy.x, boy.y, 50, 70)
+            pass
+        elif int(boy.frame) == 3:
+            boy.image.clip_draw(560, 240, 35, 45, boy.x, boy.y, 50, 70)
 
 class Run:
 
@@ -91,8 +124,7 @@ class Run:
 
     @staticmethod
     def exit(boy, e):
-        if space_down(e):
-            boy.fire_ball()
+        boy.key = 0
         pass
 
     @staticmethod
@@ -100,7 +132,6 @@ class Run:
         boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
         boy.x = clamp(25, boy.x, 1600 - 25)
         boy.runframe = (boy.runframe + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
-
         # a 또는 d 키를 뗀 경우, 다시 눌렀을 때 움직임을 시작하도록 설정
         if boy.key == 1 and boy.dir != 0:
             boy.dir = boy.dir - 1
@@ -115,8 +146,9 @@ class StateMachine:
         self.boy = boy
         self.cur_state = Idle
         self.transitions = {
-            Idle: {right_down: Run, left_down: Run, left_up: Run, right_up: Run, space_down: Idle},
-            Run: {right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle, space_down: Run},
+            Idle: {right_down: Run, left_down: Run, space_down: Idle},
+            Run: {right_up: Idle, left_up: Idle, space_down: Run, lay_down: Stun},
+            Stun: {time_out: Idle}
         }
 
     def start(self):
@@ -162,6 +194,9 @@ class Boy:
 
     def draw(self):
         self.state_machine.draw()
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return self.x - 25, self.y - 35, self.x + 25, self.y + 35
 
     # fill here
 
