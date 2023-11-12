@@ -32,6 +32,11 @@ def time_out(e):
 def lay_down(e):
     return e[0] == 'lay_down'
 
+def one_move(e):
+    return e[0] == 'GO_IDLE'
+
+def end_jump(e):
+    return e[0] == 'GO_IDLE'
 # time_out = lambda e : e[0] == 'TIME_OUT'
 
 
@@ -54,11 +59,6 @@ class Idle:
 
     @staticmethod
     def enter(boy, e):
-        if boy.face_dir == -1:
-            boy.action = 2
-        elif boy.face_dir == 1:
-            boy.action = 3
-        boy.dir = 0
         boy.frame = 0
         boy.wait_time = get_time() # pico2d import 필요
         pass
@@ -71,10 +71,41 @@ class Idle:
     @staticmethod
     def do(boy):
          boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
+         if boy.dir > 0:
+             boy.dir -= FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time
+         else:
+             boy.dir = 0
          pass
     @staticmethod
     def draw(boy):
         boy.image.clip_draw(130 + int(boy.frame) * 45, 440, 45, 45, boy.x, boy.y, 50, 70)
+
+class Jump:
+    @staticmethod
+    def enter(boy, e):
+        boy.frame = 0
+        boy.jump_y = 7
+        boy.wait_time = get_time()
+        pass
+    @staticmethod
+    def exit(boy, e):
+        pass
+
+    @staticmethod
+    def do(boy):
+        boy.x += 1.8 * boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        boy.y += boy.jump_y * RUN_SPEED_PPS * game_framework.frame_time
+        boy.jump_y -= 0.1
+        if int(boy.frame) < 4:
+            boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
+        if boy.y <= 210:
+            boy.y = 210
+            boy.state_machine.handle_event(('GO_IDLE', 0))
+        pass
+
+    @staticmethod
+    def draw(boy):
+        boy.image.clip_draw(138 + int(boy.frame) * 43, 240, 43, 45, boy.x, boy.y, 50, 70)
 class Stun:
     @staticmethod
     def enter(boy, e):
@@ -87,11 +118,18 @@ class Stun:
 
     @staticmethod
     def do(boy):
+        if boy.y > 210:
+            boy.y += boy.jump_y * RUN_SPEED_PPS * game_framework.frame_time
+            boy.jump_y -= 0.1
+        else :
+            boy.y = 210
+
         if int(boy.frame) < 3:
             boy.x += 1
             boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
         if get_time() - boy.wait_time > 2:
             boy.state_machine.handle_event(('TIME_OUT', 0))
+
         pass
 
     @staticmethod
@@ -109,18 +147,18 @@ class Stun:
             boy.image.clip_draw(560, 240, 35, 45, boy.x, boy.y, 50, 70)
 
 class Run:
-
     @staticmethod
     def enter(boy, e):
         if right_down(e):  # 오른쪽으로 RUN
             if boy.key == 0:
-                boy.dir, boy.face_dir, boy.key = 10, 1, 1
+                boy.dir, boy.face_dir, boy.key = 3.5, 1, 1
         elif left_down(e):  # 왼쪽으로 RUN
             if boy.key == 0:
                 boy.x, boy.y = 50, 210
         elif left_up(e) or right_up(e):
             if boy.key == 1:
                 boy.key = 0
+        boy.wait_time = get_time()
 
     @staticmethod
     def exit(boy, e):
@@ -129,12 +167,19 @@ class Run:
 
     @staticmethod
     def do(boy):
-        boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        # boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
         boy.x = clamp(25, boy.x, 1600 - 25)
         boy.runframe = (boy.runframe + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
         # a 또는 d 키를 뗀 경우, 다시 눌렀을 때 움직임을 시작하도록 설정
-        if boy.key == 1 and boy.dir != 0:
-            boy.dir = boy.dir - 1
+        boy.dir = boy.dir - FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time
+        if boy.dir > 0:
+            boy.dir -= FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time
+        else:
+            boy.dir = 0
+        if get_time() - boy.wait_time > 0.1:
+            boy.state_machine.handle_event(('GO_IDLE', 0))
+        else:
+            boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
 
     @staticmethod
     def draw(boy):
@@ -146,9 +191,10 @@ class StateMachine:
         self.boy = boy
         self.cur_state = Idle
         self.transitions = {
-            Idle: {right_down: Run, left_down: Run, space_down: Idle},
-            Run: {right_up: Idle, left_up: Idle, space_down: Run, lay_down: Stun},
-            Stun: {time_out: Idle}
+            Idle: {right_down: Run, left_down: Run, space_down: Jump},
+            Run: {right_up: Idle, left_up: Idle, space_down: Run, lay_down: Stun, one_move: Idle, space_down: Jump},
+            Stun: {time_out: Idle},
+            Jump: {end_jump: Idle, lay_down: Stun}
         }
 
     def start(self):
@@ -184,6 +230,7 @@ class Boy:
         self.state_machine.start()
         self.ball_count = 10
         self.key = 0
+        self.jump_y = 0
 
 
     def update(self):
@@ -196,7 +243,7 @@ class Boy:
         self.state_machine.draw()
         draw_rectangle(*self.get_bb())
     def get_bb(self):
-        return self.x - 25, self.y - 35, self.x + 25, self.y + 35
+        return self.x - 15, self.y - 25, self.x + 15, self.y + 25
 
     # fill here
 

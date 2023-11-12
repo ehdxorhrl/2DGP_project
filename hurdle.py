@@ -14,10 +14,10 @@ class Hurdle:
             self.image.draw(400, 200, 100, 100)
             draw_rectangle(*self.get_bb())
         elif self.state == 'lay_down':
-            self.image.rotate_draw(math.radians(270), 450, 200, 100, 100)
+            self.image.rotate_draw(math.radians(270), 450, 200, 80, 100)
 
     def get_bb(self):
         if self.state == 'stand':
-            return self.x - 10, self.y - 100, self.x + 40, self.y - 20
+            return self.x, self.y - 70, self.x + 30, self.y - 20
         else:
             pass
