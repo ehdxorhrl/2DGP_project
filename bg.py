@@ -8,6 +8,6 @@ class Background:
         pass
 
     def draw(self):
-        self.image.draw(400, 266, 800, 532)
+        self.image.clip_draw(0, 0, 400, 266, 400, 266, 800, 532)
 
 
