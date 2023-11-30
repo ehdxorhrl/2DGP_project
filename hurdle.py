@@ -1,16 +1,19 @@
 from pico2d import *
+import random
+import Ingame
 
 class Hurdle:
     def __init__(self):
         self.image = load_image('hurdle.png')
-        self.x, self.y = 400, 266
+        self.x, self.y = random.randint(100, 1500), 266
         self.state = 'stand'
+        self.sx = 0
 
     def set_background(self, bg):
         self.bg = bg
 
     def update(self):
-        self.sx = (self.x - self.bg.window_left)
+        self.sx = (self.x - self.bg.window_left) * 2
         pass
 
     def draw(self):
@@ -22,6 +25,9 @@ class Hurdle:
 
     def get_bb(self):
         if self.state == 'stand':
-            return self.sx, self.y - 70, self.sx + 30, self.y - 20
+            if Ingame.phase == 0:
+                return self.sx, self.y - 70, self.sx + 30, self.y - 20
+            elif Ingame.phase == 1:
+                return self.sx - 100, self.y - 90, self.sx - 20, self.y - 20
         else:
             pass
