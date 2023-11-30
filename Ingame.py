@@ -2,6 +2,7 @@ import random
 from pico2d import *
 import game_framework
 
+from Scene import PATTERN
 import Game_World
 from bg import Background
 from Athletics import Boy
@@ -13,6 +14,8 @@ from record import PLAY_TIME
 def handle_events():
     global hurdles
     global phase
+    global pattern
+    global pt
 
     if phase == 0:
         events = get_events()
@@ -49,15 +52,30 @@ def handle_events():
                     pass
                 else:
                     server.boy.handle_event(event)
+            elif pattern == True:
+                if event.type == SDL_KEYDOWN:
+                    if event.key == SDLK_LEFT or event.key == SDLK_RIGHT or event.key == SDLK_UP or event.key == SDLK_DOWN:  # 왼쪽 화살표 키인지 확인
+                        if pt.result_list[pt.pattern_num][pt.pattern_index] == event.key:
+                            pt.result_list[pt.pattern_num][pt.pattern_index] = 0
+                            pt.pattern_index += 1
+                        else:
+                            pt.pattern_index = 0
+                            pt.set_patter()
 def init():
     # global grass
     global hurdles
     global start_time
     global phase
+    global pattern
+    global pt
 
-    phase = 0
+    pattern = False
+    phase = 1
     running = True
     start_time = 3
+
+    pt = PATTERN()
+    Game_World.add_object(pt, 1)
 
     server.background = Background()
     Game_World.add_object(server.background, 0)
@@ -90,6 +108,7 @@ def finish():
 def update():
     global hurdles
     global phase
+    global pattern
     Game_World.update()
     if phase == 0:
         for hurdle in hurdles:
