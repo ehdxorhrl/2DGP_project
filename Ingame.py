@@ -10,10 +10,8 @@ import server
 import shooting
 from record import PLAY_TIME
 
-phase = 0
-
 def handle_events():
-    global hurdle
+    global hurdles
     global phase
 
     if phase == 0:
@@ -27,9 +25,8 @@ def handle_events():
                 server.boy.start_time = 2.5
                 server.boy.play_time = 0
                 server.boy.x = 10
-                hurdle1.state = 'stand'
-                hurdle2.state = 'stand'
-                hurdle3.state = 'stand'
+                for hurdle in hurdles:
+                    hurdle.state = 'stand'
                 pass
             else:
                 if server.play_time.start_time <= -0.5:
@@ -37,27 +34,24 @@ def handle_events():
     elif phase == 1:
         events = get_events()
         for event in events:
-            if event.type == SDL_QUIT:
-                game_framework.quit()
-            elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
-                game_framework.quit()
-            elif event.type == SDL_KEYDOWN and event.key == SDLK_r:
-                server.boy.start_time = 2.5
-                server.boy.play_time = 0
-                server.boy.x = 10
-                phase = 0
-                hurdle1.state = 'stand'
-                hurdle2.state = 'stand'
-                hurdle3.state = 'stand'
-                pass
-            else:
-                if server.play_time.start_time <= -0.5:
+            if pattern == False:
+                if event.type == SDL_QUIT:
+                    game_framework.quit()
+                elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
+                    game_framework.quit()
+                elif event.type == SDL_KEYDOWN and event.key == SDLK_r:
+                    server.boy.start_time = 2.5
+                    server.boy.play_time = 0
+                    server.boy.x = 10
+                    phase = 0
+                    for hurdle in hurdles:
+                        hurdle.state = 'stand'
+                    pass
+                else:
                     server.boy.handle_event(event)
 def init():
     # global grass
-    global hurdle1
-    global hurdle2
-    global hurdle3
+    global hurdles
     global start_time
     global phase
 
@@ -74,22 +68,18 @@ def init():
     server.boy = Boy()
     Game_World.add_object(server.boy, 2)
 
-    hurdle1 = Hurdle()
-    Game_World.add_object(hurdle1, 1)
-    hurdle1.x = 200
+    positions = [300, 700, 1100]
+    hurdles = []
 
-    hurdle2 = Hurdle()
-    Game_World.add_object(hurdle2, 1)
-    hurdle2.x = 700
-
-    hurdle3 = Hurdle()
-    Game_World.add_object(hurdle3, 1)
-    hurdle3.x = 1100
+    for pos in positions:
+        hurdle = Hurdle()
+        Game_World.add_object(hurdle, 1)
+        hurdle.x = pos
+        hurdles.append(hurdle)
 
     server.boy.set_background(server.background)
-    hurdle1.set_background(server.background)
-    hurdle2.set_background(server.background)
-    hurdle3.set_background(server.background)
+    for hurdle in hurdles:
+        hurdle.set_background(server.background)
 
     # fill here
 def finish():
@@ -98,29 +88,32 @@ def finish():
 
 
 def update():
-    global hurdle1
-    global hurdle2
-    global hurdle3
+    global hurdles
     global phase
     Game_World.update()
-    if hurdle1.state == 'stand':
-        if Game_World.collide(server.boy, hurdle1):
-            hurdle1.state = 'lay_down'
-            server.boy.state_machine.handle_event(('lay_down', 0))
-    if hurdle2.state == 'stand':
-        if Game_World.collide(server.boy, hurdle2):
-            hurdle2.state = 'lay_down'
-            server.boy.state_machine.handle_event(('lay_down', 0))
-    if hurdle3.state == 'stand':
-        if Game_World.collide(server.boy, hurdle3):
-            hurdle3.state = 'lay_down'
-            server.boy.state_machine.handle_event(('lay_down', 0))
-    if server.boy.x >= 2000 and phase == 0:
-        phase = 1
-        server.boy.x = 0
-        hurdle1.state = 'stand'
-        hurdle2.state = 'stand'
-        hurdle3.state = 'stand'
+    if phase == 0:
+        for hurdle in hurdles:
+            if hurdle.state == 'stand' and Game_World.collide(server.boy, hurdle):
+                hurdle.state = 'lay_down'
+                server.boy.state_machine.handle_event(('lay_down', 0))
+        if server.boy.x >= 2000:
+            positions = [150, 500, 700, 1400]
+            phase = 1
+            server.boy.x = 0
+            for hurdle in hurdles:
+                hurdle.state = 'stand'
+
+            for pos in positions:
+                hurdle = Hurdle()
+                Game_World.add_object(hurdle, 1)
+                hurdle.x = pos
+                hurdles.append(hurdle)
+
+    elif phase == 1:
+        if pattern == False:
+            for hurdle in hurdles:
+                if hurdle.state == 'stand' and Game_World.collide(server.boy, hurdle):
+                    pattern = True
 
 
 def draw():
