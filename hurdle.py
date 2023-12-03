@@ -22,6 +22,6 @@ class Hurdle:
 
     def get_bb(self):
         if self.state == 'stand':
-            return self.x, self.y - 70, self.x + 30, self.y - 20
+            return self.sx, self.y - 70, self.sx + 30, self.y - 20
         else:
             pass
