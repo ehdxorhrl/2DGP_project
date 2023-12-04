@@ -15,7 +15,7 @@ class PLAY_TIME:
         current_time = self.play_time  # 현재 시간(초 단위)을 가져옵니다.
         seconds = int(current_time)  # 현재 시간의 정수 부분은 초 단위로 표시됩니다.
         milliseconds = int((current_time - seconds) * 1000)
-        play_str = "{:02d}:{:02d}".format(seconds % 60, milliseconds // 10, milliseconds % 10)
+        play_str = "{:02d}:{:02d}".format(seconds, milliseconds // 10, milliseconds % 10)
         self.play_font.draw(700, 400, play_str, (255, 255, 255))
         if self.start_time >= 1:
             time_str = str(round(self.start_time + 1))
