@@ -19,7 +19,6 @@ class Hurdle:
     def draw(self):
         if self.state == 'stand':
             self.image.draw(self.sx, 200, 100, 100)
-            draw_rectangle(*self.get_bb())
         elif self.state == 'lay_down':
             self.image.rotate_draw(math.radians(270), self.sx + 50, 200, 80, 100)
 

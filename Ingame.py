@@ -8,7 +8,6 @@ from bg import Background
 from Athletics import Boy
 from hurdle import Hurdle
 import server
-import shooting
 from record import PLAY_TIME
 import result
 

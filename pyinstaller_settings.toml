@@ -3,7 +3,10 @@ main_file = 'main.py'
 
 # 데이타 파일들을 지정하세요.
 data_files = [
-    'background_athletics.png',  'hurdle.png', 'sonic_sprite.png'
+    'background_athletics.png',  'hurdle.png', 'sonic_sprite.png', 'bg_music.mp3', 'clear.mp3',
+    'countdown.mp3', 'down.png', 'DS-DIGIB.TTF', 'ENCR10B.TTF', 'fail.mp3', 'frame1.png', 'frame2.png', 'frame3.png',
+    'good.mp3', 'hurdle.png', 'jump.mp3', 'left.png', 'record.png', 'record2.png', 'right.png', 'sonic_sprite.png',
+    'stun.wav', 'title.mp3', 'title1.png', 'title2.png', 'title3.png', 'title4.png', 'up.png', '배경2.png', 'babam.mp3'
 ]
 
 # 데이타가 들어있는 폴더들을 지정하세요.
