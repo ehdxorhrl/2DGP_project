@@ -6,6 +6,8 @@ import Game_World
 import game_framework
 import server
 import math
+import time
+import Ingame
 
 # state event check
 
@@ -25,7 +27,9 @@ def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
 def space_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
+    if Ingame.phase == 0:
+        return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
+    pass
 
 def time_out(e):
     return e[0] == 'TIME_OUT'
@@ -38,6 +42,9 @@ def one_move(e):
 
 def end_jump(e):
     return e[0] == 'GO_IDLE'
+
+def clear_pt(e):
+    return e[0] == 'GOOD'
 # time_out = lambda e : e[0] == 'TIME_OUT'
 
 
@@ -85,7 +92,7 @@ class Jump:
     @staticmethod
     def enter(boy, e):
         boy.frame = 0
-        boy.jump_y = 7
+        boy.jump_y = 4.5
         boy.wait_time = get_time()
         pass
     @staticmethod
@@ -94,9 +101,11 @@ class Jump:
 
     @staticmethod
     def do(boy):
-        boy.x += 1.8 * boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        boy.x += 1.1 * boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        if boy.dir > 0:
+            boy.dir -= 0.1 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time
         boy.y += boy.jump_y * RUN_SPEED_PPS * game_framework.frame_time
-        boy.jump_y -= 0.1
+        boy.jump_y -= 0.1 * RUN_SPEED_PPS * game_framework.frame_time
         if int(boy.frame) < 4:
             boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
         if boy.y <= 210:
@@ -121,12 +130,12 @@ class Stun:
     def do(boy):
         if boy.y > 210:
             boy.y += boy.jump_y * RUN_SPEED_PPS * game_framework.frame_time
-            boy.jump_y -= 0.1
-        else :
+            boy.jump_y -= 0.1 * RUN_SPEED_PPS * game_framework.frame_time
+        else:
             boy.y = 210
 
         if int(boy.frame) < 3:
-            boy.x += 1
+            boy.x += 1 * RUN_SPEED_PPS * game_framework.frame_time
             boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
         if get_time() - boy.wait_time > 2:
             boy.state_machine.handle_event(('TIME_OUT', 0))
@@ -151,7 +160,7 @@ class Run:
     def enter(boy, e):
         if right_down(e):  # 오른쪽으로 RUN
             if boy.key == 0:
-                boy.dir, boy.face_dir, boy.key = 3.5, 1, 1
+                boy.dir, boy.face_dir, boy.key = 3.0, 1, 1
         elif left_down(e):  # 왼쪽으로 RUN
             if boy.key == 0:
                 boy.x, boy.y = 50, 210
@@ -185,16 +194,48 @@ class Run:
     def draw(boy):
         boy.image.clip_draw(135 + int(boy.runframe) * 46, 310, 46, 45, boy.sx, boy.y, 50, 70)
 
+class Good:
+    @staticmethod
+    def enter(boy, e):
+        boy.frame = 0
+        boy.jump_y = 4.5
+        boy.dir = 2.0
+        boy.wait_time = get_time()
+        pass
+    @staticmethod
+    def exit(boy, e):
+        pass
+
+    @staticmethod
+    def do(boy):
+        boy.x += 1.1 * boy.dir * RUN_SPEED_PPS * game_framework.frame_time
+        if boy.dir > 0:
+            boy.dir -= 0.1 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time
+        boy.y += boy.jump_y * RUN_SPEED_PPS * game_framework.frame_time
+        boy.jump_y -= 0.1 * RUN_SPEED_PPS * game_framework.frame_time
+        if int(boy.frame) < 4:
+            boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
+        if boy.y <= 210:
+            boy.y = 210
+            boy.state_machine.handle_event(('GO_IDLE', 0))
+            Ingame.pattern = False
+            Ingame.pt.good = False
+        pass
+
+    @staticmethod
+    def draw(boy):
+        boy.image.clip_draw(138 + int(boy.frame) * 43, 240, 43, 45, boy.sx, boy.y, 50, 70)
 
 class StateMachine:
     def __init__(self, boy):
         self.boy = boy
         self.cur_state = Idle
         self.transitions = {
-            Idle: {right_down: Run, left_down: Run, space_down: Jump},
-            Run: {right_up: Idle, left_up: Idle, space_down: Run, lay_down: Stun, one_move: Idle, space_down: Jump},
+            Idle: {right_down: Run, left_down: Run, space_down: Jump, clear_pt: Good},
+            Run: {right_up: Idle, left_up: Idle, lay_down: Stun, one_move: Idle, space_down: Jump},
             Stun: {time_out: Idle},
-            Jump: {end_jump: Idle, lay_down: Stun}
+            Jump: {end_jump: Idle, lay_down: Stun},
+            Good: {end_jump: Idle}
         }
 
     def start(self):
@@ -202,8 +243,8 @@ class StateMachine:
 
     def update(self):
         self.cur_state.do(self.boy)
-        self.boy.x = clamp(50.0, self.boy.x, self.boy.bg.w - 50.0)
-        self.boy.y = clamp(50.0, self.boy.y, self.boy.bg.h - 50.0)
+        self.boy.x = clamp(10.0, self.boy.x, self.boy.bg.w - 50.0)
+        self.boy.y = clamp(10.0, self.boy.y, self.boy.bg.h - 50.0)
 
     def handle_event(self, e):
         for check_event, next_state in self.transitions[self.cur_state].items():
@@ -222,7 +263,7 @@ class StateMachine:
 class Boy:
     def __init__(self):
 
-        self.x, self.y = 50, 210
+        self.x, self.y = 10, 210
         self.runframe = 0
         self.frame = 0
         self.action = 3
@@ -235,6 +276,10 @@ class Boy:
         self.key = 0
         self.jump_y = 0
         self.sx = self.x
+        self.font = load_font('ENCR10B.TTF', 70)
+        self.start_time = 2.5
+        self.play_time = 0
+        self.play_font = load_font('DS-DIGIB.TTF', 36)
 
     def set_background(self, bg):
         self.bg = bg
@@ -251,9 +296,9 @@ class Boy:
         self.sx = (self.x - self.bg.window_left)
         # self.sx = self.x - self.bg.window_left
         self.state_machine.draw()
-        print(self.sx)
-        print(self.x)
-        print(self.bg.window_left)
+        # print(self.sx)
+        # print(self.x)
+        # print(self.bg.window_left)
         draw_rectangle(*self.get_bb())
 
     def get_bb(self):

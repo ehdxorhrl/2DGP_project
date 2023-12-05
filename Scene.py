@@ -2,6 +2,9 @@ import random
 import Ingame
 import pico2d
 
+import server
+
+
 class PATTERN:
     def __init__(self):
         self.element_counts = [4, 4, 7, 7, 10, 10]
@@ -17,22 +20,23 @@ class PATTERN:
             temp_list = [random.randint(1073741903, 1073741906) for _ in range(count)]
             self.result_list.append(temp_list)
         self.pattern_index = 0
-        self.pattern_num = 4
+        self.pattern_num = 0
         self.w = 50
         self.h = 50
         self.x = 400
         self.y = 450
+        self.good = False
     def update(self):
-        if self.test_patter():
-            self.pattern_num += 1
-            self.pattern_index = 0
-            Ingame.pattern = False
-
-
-
+        if self.pattern_num < 8:
+            if self.test_patter():
+                self.pattern_num += 1
+                self.pattern_index = 0
+                Ingame.pattern = False
+                server.boy.state_machine.handle_event(('GOOD', 0))
+                self.good = True
 
     def draw(self):
-        if Ingame.pattern == True:
+        if Ingame.pattern == True and self.good == False:
             if self.pattern_num == 0 or self.pattern_num == 1:
                 self.bg1.draw(self.x, self.y)
                 for i in range(0, 4):

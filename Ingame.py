@@ -43,6 +43,7 @@ def handle_events():
                 elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
                     game_framework.quit()
                 elif event.type == SDL_KEYDOWN and event.key == SDLK_r:
+                    print(event.key)
                     server.boy.start_time = 2.5
                     server.boy.play_time = 0
                     server.boy.x = 10
@@ -70,7 +71,7 @@ def init():
     global pt
 
     pattern = False
-    phase = 1
+    phase = 0
     running = True
     start_time = 3
 
@@ -126,6 +127,7 @@ def update():
                 hurdle = Hurdle()
                 Game_World.add_object(hurdle, 1)
                 hurdle.x = pos
+                hurdle.set_background(server.background)
                 hurdles.append(hurdle)
 
     elif phase == 1:

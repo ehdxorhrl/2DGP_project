@@ -47,6 +47,3 @@ def collide(a, b):
 
 
 
-# fill here
-
-
