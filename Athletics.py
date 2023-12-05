@@ -1,7 +1,7 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
 
 from pico2d import get_time, load_font, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_a, SDLK_d, \
-    draw_rectangle, clamp
+    draw_rectangle, clamp, load_music
 import Game_World
 import game_framework
 import server

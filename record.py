@@ -7,6 +7,7 @@ class PLAY_TIME:
         self.start_time = 2.5
         self.play_time = 0
         self.play_font = load_font('DS-DIGIB.TTF', 36)
+        self.cd_sound = load_music('countdown.mp3')
     def update(self):
         self.start_time -= game_framework.frame_time
         if self.start_time <= -0.5:
@@ -17,6 +18,9 @@ class PLAY_TIME:
         milliseconds = int((current_time - seconds) * 1000)
         play_str = "{:02d}:{:02d}".format(seconds, milliseconds // 10, milliseconds % 10)
         self.play_font.draw(700, 400, play_str, (255, 255, 255))
+        if self.start_time >= 2.2:
+            self.cd_sound.set_volume(30)
+            self.cd_sound.play(1)
         if self.start_time >= 1:
             time_str = str(round(self.start_time + 1))
             self.font.draw(400, 220, time_str, (255, 255, 255))

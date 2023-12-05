@@ -14,16 +14,22 @@ def init():
     global image2
     global image3
     global image4
+    global title_sound
     image1 = load_image('title1.png')
     image2 = load_image('title2.png')
     image3 = load_image('title3.png')
     image4 = load_image('title4.png')
+    title_sound = load_music('title.mp3')
+    title_sound.set_volume(50)
+    title_sound.play(1)
     scene = 0
 def finish():
     global image1
     global image2
     global image3
     global image4
+    global title_sound
+    title_sound.stop()
     del image1
     del image2
     del image3

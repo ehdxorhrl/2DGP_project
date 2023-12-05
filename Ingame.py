@@ -10,12 +10,15 @@ from hurdle import Hurdle
 import server
 import shooting
 from record import PLAY_TIME
+import result
 
 def handle_events():
     global hurdles
     global phase
     global pattern
     global pt
+    global fail_sound
+    global good_sound
 
     if phase == 0:
         events = get_events()
@@ -59,7 +62,9 @@ def handle_events():
                         if pt.result_list[pt.pattern_num][pt.pattern_index] == event.key:
                             pt.result_list[pt.pattern_num][pt.pattern_index] = 0
                             pt.pattern_index += 1
+                            good_sound.play(1)
                         else:
+                            fail_sound.play(1)
                             pt.pattern_index = 0
                             pt.set_patter()
 def init():
@@ -69,6 +74,20 @@ def init():
     global phase
     global pattern
     global pt
+    global bgm_sound
+    global fail_sound
+    global good_sound
+
+    bgm_sound = load_music('bg_music.mp3')
+    bgm_sound.set_volume(1)
+    print(bgm_sound.get_volume())
+    bgm_sound.play(1)
+
+    fail_sound = load_music('fail.mp3')
+    fail_sound.set_volume(50)
+
+    good_sound = load_music('good.mp3')
+    good_sound.set_volume(50)
 
     pattern = False
     phase = 0
@@ -102,7 +121,9 @@ def init():
 
     # fill here
 def finish():
+    global bgm
     Game_World.clear()
+    bgm_sound.stop()
     pass
 
 
@@ -135,6 +156,9 @@ def update():
             for hurdle in hurdles:
                 if hurdle.state == 'stand' and Game_World.collide(server.boy, hurdle):
                     pattern = True
+        if server.boy.x >= 1850:
+            game_framework.change_mode(result)
+
 
 
 def draw():
