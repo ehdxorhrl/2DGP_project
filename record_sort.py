@@ -13,6 +13,10 @@ def init():
     global image
     global font
     global time_list
+    global init_sound
+    init_sound = load_music('babam.mp3')
+    init_sound.set_volume(30)
+    init_sound.play(1)
     image = load_image('record2.png')
     file_name = 'record.txt'
     i = 0
@@ -22,7 +26,7 @@ def init():
         with open(file_name, 'r') as file:
             # 파일에 play_str 추가하기
             contents = file.readlines()
-            time_list = [line.strip() for line in contents]
+            time_list = [float(line.strip()) for line in contents]
             time_list.sort()
     except FileNotFoundError:
         print(f"파일 '{file_name}'을(를) 찾을 수 없습니다.")

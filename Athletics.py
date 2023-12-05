@@ -94,6 +94,7 @@ class Jump:
         boy.frame = 0
         boy.jump_y = 4.5
         boy.wait_time = get_time()
+        boy.jump_sound.play(1)
         pass
     @staticmethod
     def exit(boy, e):
@@ -121,6 +122,7 @@ class Stun:
     def enter(boy, e):
         boy.frame = 0
         boy.wait_time = get_time()
+        boy.stun_sound.play()
         pass
     @staticmethod
     def exit(boy, e):
@@ -201,6 +203,7 @@ class Good:
         boy.jump_y = 4.5
         boy.dir = 2.0
         boy.wait_time = get_time()
+        boy.jump_sound.play(1)
         pass
     @staticmethod
     def exit(boy, e):
@@ -280,13 +283,15 @@ class Boy:
         self.start_time = 2.5
         self.play_time = 0
         self.play_font = load_font('DS-DIGIB.TTF', 36)
+        self.jump_sound = load_music("jump.mp3")
+        self.jump_sound.set_volume(30)
+        self.stun_sound = load_music("stun.wav")
+        self.stun_sound.set_volume(30)
 
     def set_background(self, bg):
         self.bg = bg
 
     def update(self):
-        # sx = self.x - server.background.window_left
-        # sy = self.y - server.background.window_bottom
         self.state_machine.update()
 
     def handle_event(self, event):
@@ -294,12 +299,8 @@ class Boy:
 
     def draw(self):
         self.sx = (self.x - self.bg.window_left)
-        # self.sx = self.x - self.bg.window_left
         self.state_machine.draw()
-        # print(self.sx)
-        # print(self.x)
-        # print(self.bg.window_left)
-        draw_rectangle(*self.get_bb())
+        # draw_rectangle(*self.get_bb())
 
     def get_bb(self):
         return self.sx - 15, self.y - 25, self.sx + 20, self.y + 25
