@@ -1,12 +1,13 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
 
 from pico2d import get_time, load_font, load_image, clamp, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_a, SDLK_d, \
-    draw_rectangle
+    draw_rectangle, clamp
 import Game_World
 import game_framework
+import server
+import math
 
 # state event check
-# ( state event type, event value )
 
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_a or e[1].key == SDLK_d)
@@ -78,7 +79,7 @@ class Idle:
          pass
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(130 + int(boy.frame) * 45, 440, 45, 45, boy.x, boy.y, 50, 70)
+        boy.image.clip_draw(130 + int(boy.frame) * 45, 440, 45, 45, boy.sx, boy.y, 50, 70)
 
 class Jump:
     @staticmethod
@@ -105,7 +106,7 @@ class Jump:
 
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(138 + int(boy.frame) * 43, 240, 43, 45, boy.x, boy.y, 50, 70)
+        boy.image.clip_draw(138 + int(boy.frame) * 43, 240, 43, 45, boy.sx, boy.y, 50, 70)
 class Stun:
     @staticmethod
     def enter(boy, e):
@@ -129,22 +130,21 @@ class Stun:
             boy.frame = (boy.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time)
         if get_time() - boy.wait_time > 2:
             boy.state_machine.handle_event(('TIME_OUT', 0))
-
         pass
 
     @staticmethod
     def draw(boy):
         if int(boy.frame) == 0:
-            boy.image.clip_draw(635, 440, 45, 45, boy.x, boy.y, 50, 70)
+            boy.image.clip_draw(635, 440, 45, 45, boy.sx, boy.y, 50, 70)
             pass
         elif int(boy.frame) == 1:
-            boy.image.clip_draw(585, 440, 45, 45, boy.x, boy.y, 50, 70)
+            boy.image.clip_draw(585, 440, 45, 45, boy.sx, boy.y, 50, 70)
             pass
         elif int(boy.frame) == 2:
-            boy.image.clip_draw(510, 240, 35, 45, boy.x, boy.y, 50, 70)
+            boy.image.clip_draw(510, 240, 35, 45, boy.sx, boy.y, 50, 70)
             pass
         elif int(boy.frame) == 3:
-            boy.image.clip_draw(560, 240, 35, 45, boy.x, boy.y, 50, 70)
+            boy.image.clip_draw(560, 240, 35, 45, boy.sx, boy.y, 50, 70)
 
 class Run:
     @staticmethod
@@ -168,7 +168,7 @@ class Run:
     @staticmethod
     def do(boy):
         # boy.x += boy.dir * RUN_SPEED_PPS * game_framework.frame_time
-        boy.x = clamp(25, boy.x, 1600 - 25)
+        boy.x = clamp(25, boy.x, 2000)
         boy.runframe = (boy.runframe + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 6
         # a 또는 d 키를 뗀 경우, 다시 눌렀을 때 움직임을 시작하도록 설정
         boy.dir = boy.dir - FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time
@@ -183,7 +183,7 @@ class Run:
 
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(135 + int(boy.runframe) * 46, 310, 46, 45, boy.x, boy.y, 50, 70)
+        boy.image.clip_draw(135 + int(boy.runframe) * 46, 310, 46, 45, boy.sx, boy.y, 50, 70)
 
 
 class StateMachine:
@@ -202,6 +202,8 @@ class StateMachine:
 
     def update(self):
         self.cur_state.do(self.boy)
+        self.boy.x = clamp(50.0, self.boy.x, self.boy.bg.w - 50.0)
+        self.boy.y = clamp(50.0, self.boy.y, self.boy.bg.h - 50.0)
 
     def handle_event(self, e):
         for check_event, next_state in self.transitions[self.cur_state].items():
@@ -219,6 +221,7 @@ class StateMachine:
 
 class Boy:
     def __init__(self):
+
         self.x, self.y = 50, 210
         self.runframe = 0
         self.frame = 0
@@ -231,19 +234,30 @@ class Boy:
         self.ball_count = 10
         self.key = 0
         self.jump_y = 0
+        self.sx = self.x
 
+    def set_background(self, bg):
+        self.bg = bg
 
     def update(self):
+        # sx = self.x - server.background.window_left
+        # sy = self.y - server.background.window_bottom
         self.state_machine.update()
 
     def handle_event(self, event):
         self.state_machine.handle_event(('INPUT', event))
 
     def draw(self):
+        self.sx = (self.x - self.bg.window_left)
+        # self.sx = self.x - self.bg.window_left
         self.state_machine.draw()
+        print(self.sx)
+        print(self.x)
+        print(self.bg.window_left)
         draw_rectangle(*self.get_bb())
+
     def get_bb(self):
-        return self.x - 15, self.y - 25, self.x + 20, self.y + 25
+        return self.sx - 15, self.y - 25, self.sx + 20, self.y + 25
 
     # fill here
 
